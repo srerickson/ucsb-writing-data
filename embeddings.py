@@ -69,3 +69,20 @@ with duckdb.connect(database=str(db_path)) as conn:
     conn.execute(create_table_sql)
     conn.execute(import_responses_sql)
     conn.execute(mxbai_embed_large_sql)
+
+    def search(q: str):
+        query_embed = mxbai_embed_large(q)
+        sql = """
+            FROM mxbai_embed_large
+            JOIN text_responses ON (mxbai_embed_large.id = text_responses.id)
+            SELECT 
+                array_inner_product(mxbai_embed_large.embedding, CAST($embed as FLOAT[1024])) AS similarity,
+                text_responses.response_text AS text
+            ORDER BY similarity DESC
+            LIMIT 20;
+        """
+        conn.execute(sql, {"embed": query_embed})
+        for row in conn.fetchall():
+            print(row[0], row[1])
+    
+    search("poverty and discrimination")
