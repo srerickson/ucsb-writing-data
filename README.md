@@ -1,4 +1,4 @@
 
 ## Data
 
-embeddings: `s3:dreamlab-public/sorapure/embeddings.parquet`
+embeddings: `https://dreamlab-public.s3.us-west-2.amazonaws.com/sorapure/mxbai_embeddings.parquet`
