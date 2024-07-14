@@ -1,31 +1,31 @@
 import pathlib
-import ollama
 import duckdb
+import ollama
 from duckdb.typing import VARCHAR
 from typing import Sequence         
 
 src_path = pathlib.Path('data/reflections.csv')
-db_path = pathlib.Path(f'outputs/reflections.duckdb')
+db_path = pathlib.Path(f'outputs/embeddings.duckdb')
 
 create_table_sql = """
-    CREATE SEQUENCE IF NOT EXISTS seq_text_responses_id START 1;
-    CREATE TABLE IF NOT EXISTS text_responses (
+    CREATE SEQUENCE IF NOT EXISTS seq_texts_id START 1;
+    CREATE TABLE IF NOT EXISTS texts (
         id INTEGER PRIMARY KEY,
         student_id VARCHAR,
         question_id VARCHAR,
-        response_text VARCHAR,
+        text VARCHAR,
         UNIQUE(student_id, question_id)
     );
 """
 
 import_responses_sql = f"""
-    INSERT INTO text_responses (
+    INSERT INTO texts (
         id,
         student_id,
         question_id,
-        response_text
+        text
     ) SELECT
-        nextval('seq_text_responses_id'),
+        nextval('seq_texts_id'),
         perm as student_id, 
         question_id, 
         response_text
@@ -36,27 +36,27 @@ import_responses_sql = f"""
 
 mxbai_embed_large_sql = """
     CREATE TABLE IF NOT EXISTS mxbai_embed_large (
-        id INTEGER PRIMARY KEY,
+        text_id INTEGER PRIMARY KEY,
         embedding FLOAT[1024],
-        FOREIGN KEY (id) REFERENCES text_responses (id)
+        FOREIGN KEY (text_id) REFERENCES texts (id)
     );
-    INSERT INTO mxbai_embed_large (id, embedding)
+    INSERT INTO mxbai_embed_large (text_id, embedding)
     SELECT 
-        resp_id,
-        do_mxbai_embed_large(resp_text)
+        text_id,
+        do_mxbai_embed_large(text)
     FROM (
         SELECT 
-            text_responses.id as resp_id,
-            text_responses.response_text as resp_text,
+            texts.id as text_id,
+            texts.text as text,
             mxbai_embed_large.embedding as embedding
-        FROM text_responses
+        FROM texts
         LEFT OUTER JOIN mxbai_embed_large 
-            ON mxbai_embed_large.id = text_responses.id
+            ON mxbai_embed_large.text_id = texts.id
         WHERE embedding is NULL
     );
 """
 
-def mxbai_embed_large(text :str) -> Sequence[float] | None:
+def mxbai_embed_ollama(text :str) -> Sequence[float] | None:
     model = "mxbai-embed-large"
     try:
         response = ollama.embeddings(model=model, prompt=text)
@@ -65,24 +65,8 @@ def mxbai_embed_large(text :str) -> Sequence[float] | None:
         return None
 
 with duckdb.connect(database=str(db_path)) as conn:
-    conn.create_function('do_mxbai_embed_large', mxbai_embed_large, [VARCHAR], 'FLOAT[1024]')
+    conn.create_function('do_mxbai_embed_large', mxbai_embed_ollama, [VARCHAR], 'FLOAT[1024]')
     conn.execute(create_table_sql)
     conn.execute(import_responses_sql)
     conn.execute(mxbai_embed_large_sql)
-
-    def search(q: str):
-        query_embed = mxbai_embed_large(q)
-        sql = """
-            FROM mxbai_embed_large
-            JOIN text_responses ON (mxbai_embed_large.id = text_responses.id)
-            SELECT 
-                array_inner_product(mxbai_embed_large.embedding, CAST($embed as FLOAT[1024])) AS similarity,
-                text_responses.response_text AS text
-            ORDER BY similarity DESC
-            LIMIT 20;
-        """
-        conn.execute(sql, {"embed": query_embed})
-        for row in conn.fetchall():
-            print(row[0], row[1])
-    
-    search("poverty and discrimination")
+    conn.execute("COPY mxbai_embed_large to 'outputs/embeddings.parquet' (FORMAT PARQUET);")
