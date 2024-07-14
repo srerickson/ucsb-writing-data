@@ -4,8 +4,9 @@ import ollama
 from duckdb.typing import VARCHAR
 from typing import Sequence         
 
-src_path = pathlib.Path('data/reflections.csv')
-db_path = pathlib.Path(f'outputs/embeddings.duckdb')
+src_path = pathlib.Path('data') / 'reflections.csv'
+db_path = pathlib.Path('outputs') / 'embeddings.duckdb'
+mxbai_path = pathlib.Path('outputs') / 'mxbai_embeddings.parquet'
 
 create_table_sql = """
     CREATE SEQUENCE IF NOT EXISTS seq_texts_id START 1;
@@ -56,6 +57,19 @@ mxbai_embed_large_sql = """
     );
 """
 
+# export mxbai embeddings to parquet format
+mxbai_export_sql = f"""
+    COPY (
+         SELECT 
+            texts.student_id as student_id,
+            texts.question_id as question_id,
+            mxbai_embed_large.embedding as embedding
+        FROM texts
+        LEFT JOIN mxbai_embed_large 
+            ON mxbai_embed_large.text_id = texts.id
+    ) TO '{str(mxbai_path)}' (FORMAT PARQUET);
+"""
+
 def mxbai_embed_ollama(text :str) -> Sequence[float] | None:
     model = "mxbai-embed-large"
     try:
@@ -69,4 +83,5 @@ with duckdb.connect(database=str(db_path)) as conn:
     conn.execute(create_table_sql)
     conn.execute(import_responses_sql)
     conn.execute(mxbai_embed_large_sql)
-    conn.execute("COPY mxbai_embed_large to 'outputs/embeddings.parquet' (FORMAT PARQUET);")
+    conn.execute(mxbai_export_sql)
+
