@@ -1,3 +1,6 @@
-data
-outputs
+data/**
+!data/.gitkeep
+outputs/**
+!outputs/.gitkeep
 .venv
+**/.ipynb_checkpoints

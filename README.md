@@ -1,6 +1,10 @@
+# LLMs/Embeddings for Qualitative Data Analysis
 
-## Data
+This is work in progress
 
-embeddings: `https://dreamlab-public.s3.us-west-2.amazonaws.com/sorapure/mxbai_embeddings.parquet`
+## TODO
 
-## Install with Conda
+- [ ] cleanup the query notebooks so the result data frame is more useful
+- [ ] install/setup instructions
+- [ ] full RAG notebook.
+- [ ] Try/evaluate other models.
