@@ -1,10 +1,16 @@
-# LLMs/Embeddings for Qualitative Data Analysis
+# Using Embeddings for Qualitative Data Exploration
 
-This is work in progress
+Experimenting with LLM for exploring and visualizing a large collection to free-text survey responses. Work in progress
 
-## TODO
+### Dependencies
 
-- [ ] cleanup the query notebooks so the result data frame is more useful
-- [ ] install/setup instructions
-- [ ] full RAG notebook.
-- [ ] Try/evaluate other models.
+The Jupyter notebook, `query.ipynb`, requires a few packages that need to be
+installed.
+
+```sh
+# using pip
+pip install jupyterlab duckdb pandas sentence_transformers
+
+# using conda
+conda install jupyterlab duckdb pandas sentence_transformers
+```
