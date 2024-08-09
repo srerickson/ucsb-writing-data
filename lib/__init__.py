@@ -2,6 +2,8 @@ import duckdb
 from pathlib import Path
 import pandas as pd
 from sentence_transformers import SentenceTransformer
+from IPython.display import Markdown as md
+from IPython import display
 
 # load the model for computing embeddings for query string
 model = SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1")
@@ -22,6 +24,7 @@ def search_df(q: str, df: pd.DataFrame, limit: int = 25) -> pd.DataFrame:
         LEFT JOIN read_parquet('{embeddings_file}') ON (df.perm = student_id)
         SELECT 
             df.*,
+            embedding,
             question_id as result_question_id,
             array_distance(
                 CAST(embedding as FLOAT[1024]),
@@ -38,3 +41,8 @@ def search_df(q: str, df: pd.DataFrame, limit: int = 25) -> pd.DataFrame:
     return result
 
 
+def search_display(q: str, df: pd.DataFrame, limit: int = 25):
+    result = search_df(q, df, limit)
+    for i, row in result.iterrows():
+        text = f"({str(row['result_distance'])[:6]}) {row['result_text']}"
+        display(md(text))
