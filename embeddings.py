@@ -2,13 +2,19 @@ import pathlib
 import duckdb
 import ollama
 from duckdb.typing import VARCHAR
-from typing import Sequence         
+from typing import Sequence
+from openai import OpenAI
 
 src_path = pathlib.Path('data') / 'reflections.csv'
-db_path = pathlib.Path('outputs') / 'embeddings.duckdb'
+db_path = pathlib.Path('outputs') / 'reflection_embeddings.duckdb'
 mxbai_path = pathlib.Path('outputs') / 'mxbai_embeddings.parquet'
+openai_path = pathlib.Path('outputs') / 'openai_3small.parquet'
 
-create_table_sql = """
+# Make sure OPENAI_API_KEY
+OAclient = OpenAI()
+
+# SQL to create a table for reflections data: one question/response per row
+create_table_sql = f"""
     CREATE SEQUENCE IF NOT EXISTS seq_texts_id START 1;
     CREATE TABLE IF NOT EXISTS texts (
         id INTEGER PRIMARY KEY,
@@ -17,9 +23,6 @@ create_table_sql = """
         text VARCHAR,
         UNIQUE(student_id, question_id)
     );
-"""
-
-import_responses_sql = f"""
     INSERT INTO texts (
         id,
         student_id,
@@ -35,6 +38,7 @@ import_responses_sql = f"""
     ) ON CONFLICT DO NOTHING;  
 """
 
+# SQL to create table to mxbai embeddings and generate embeddings.
 mxbai_embed_large_sql = """
     CREATE TABLE IF NOT EXISTS mxbai_embed_large (
         text_id INTEGER PRIMARY KEY,
@@ -57,7 +61,7 @@ mxbai_embed_large_sql = """
     );
 """
 
-# export mxbai embeddings to parquet format
+# export mxbai embeddings to parquet format for upload to 23
 mxbai_export_sql = f"""
     COPY (
          SELECT 
@@ -70,6 +74,42 @@ mxbai_export_sql = f"""
     ) TO '{str(mxbai_path)}' (FORMAT PARQUET);
 """
 
+# SQ: create separate table to openai embeddings and generate embeddings.
+openai_3small_sql = """
+    CREATE TABLE IF NOT EXISTS openai_3small (
+        text_id INTEGER PRIMARY KEY,
+        embedding FLOAT[1536],
+        FOREIGN KEY (text_id) REFERENCES texts (id)
+    );
+    INSERT INTO openai_3small (text_id, embedding)
+    SELECT 
+        text_id,
+        do_openai_3small(text)
+    FROM (
+        SELECT 
+            texts.id as text_id,
+            texts.text as text,
+            openai_3small.embedding as embedding
+        FROM texts
+        LEFT OUTER JOIN openai_3small 
+            ON openai_3small.text_id = texts.id
+        WHERE embedding is NULL
+    );
+"""
+
+# export mxbai embeddings to parquet format for upload to 23
+openai_export_sql = f"""
+    COPY (
+         SELECT 
+            texts.student_id as student_id,
+            texts.question_id as question_id,
+            openai_3small.embedding as embedding
+        FROM texts
+        LEFT JOIN openai_3small 
+            ON openai_3small.text_id = texts.id
+    ) TO '{str(openai_path)}' (FORMAT PARQUET);
+"""
+
 def mxbai_embed_ollama(text :str) -> Sequence[float] | None:
     model = "mxbai-embed-large"
     try:
@@ -78,10 +118,15 @@ def mxbai_embed_ollama(text :str) -> Sequence[float] | None:
     except ollama._types.ResponseError as e:
         return None
 
+def openai_3small(text :str) -> Sequence[float] | None:
+    response =  OAclient.embeddings.create(input=text,model="text-embedding-3-small")
+    return response.data[0].embedding
+    
 with duckdb.connect(database=str(db_path)) as conn:
     conn.create_function('do_mxbai_embed_large', mxbai_embed_ollama, [VARCHAR], 'FLOAT[1024]')
+    conn.create_function('do_openai_3small', openai_3small, [VARCHAR], 'FLOAT[1536]')
     conn.execute(create_table_sql)
-    conn.execute(import_responses_sql)
     conn.execute(mxbai_embed_large_sql)
     conn.execute(mxbai_export_sql)
-
+    conn.execute(openai_3small_sql)
+    conn.execute(openai_export_sql)

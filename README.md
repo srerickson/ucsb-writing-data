@@ -9,8 +9,8 @@ installed.
 
 ```sh
 # using pip
-pip install jupyterlab duckdb pandas sentence_transformers
+pip install jupyterlab duckdb pandas sentence_transformers openai
 
 # using conda
-conda install jupyterlab duckdb pandas sentence_transformers
+conda install jupyterlab duckdb pandas sentence_transformers openai
 ```
