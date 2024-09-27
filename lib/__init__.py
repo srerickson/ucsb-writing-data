@@ -18,7 +18,7 @@ openai_file = Path("outputs") / 'openai_3small.parquet'
 def search_display(q: str, df: pd.DataFrame, limit: int = 25, model: str = "mxbai"):
     result = search_df(q, df, limit=limit, model=model)
     for i, row in result.iterrows():
-        text = f"({str(row['result_distance'])[:6]}) {row['result_text']}"
+        text = f"(distance: {str(row['result_distance'])[:4]}, perm: {row['perm']}) {row['result_text']}"
         display(md(text))
 
 
