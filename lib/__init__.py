@@ -4,6 +4,7 @@ import pandas as pd
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 from IPython.display import Markdown as md, display
+from textwrap import dedent
 
 # load the model for computing embeddings for query string
 mxbai = SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1")
@@ -55,6 +56,18 @@ def openai_search_df(q: str, df: pd.DataFrame, limit: int = 25) -> pd.DataFrame:
     result['result_text'] = result.apply(lambda row: row[row['result_question_id']], axis=1)
     return result
 
+
+def openai_completion(template: str, question: str, context: pd.DataFrame, model: str = "gpt-4o-mini") -> str:
+    context = "\n\n".join(context["result_text"])
+    client = OpenAI()
+    prompt = template.format(context=context, question=question)
+    completion = client.chat.completions.create(
+        model = model,
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user","content": prompt}
+        ])
+    return completion.choices[0].message.content
 
 def mxbai_search_df(q: str, df: pd.DataFrame, limit: int = 25) -> pd.DataFrame:
     if not mxbai_file.exists():
