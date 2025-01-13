@@ -38,7 +38,7 @@ create_table_sql = f"""
     ) ON CONFLICT DO NOTHING;  
 """
 
-# SQL to create table to mxbai embeddings and generate embeddings.
+# SQL to create mxbai embeddings table and generate embeddings.
 mxbai_embed_large_sql = """
     CREATE TABLE IF NOT EXISTS mxbai_embed_large (
         text_id INTEGER PRIMARY KEY,
@@ -61,7 +61,7 @@ mxbai_embed_large_sql = """
     );
 """
 
-# export mxbai embeddings to parquet format for upload to 23
+# export mxbai embeddings to parquet file
 mxbai_export_sql = f"""
     COPY (
          SELECT 
@@ -74,7 +74,7 @@ mxbai_export_sql = f"""
     ) TO '{str(mxbai_path)}' (FORMAT PARQUET);
 """
 
-# SQ: create separate table to openai embeddings and generate embeddings.
+# SQL to create openai embeddings table and generate embeddings.
 openai_3small_sql = """
     CREATE TABLE IF NOT EXISTS openai_3small (
         text_id INTEGER PRIMARY KEY,
@@ -97,7 +97,7 @@ openai_3small_sql = """
     );
 """
 
-# export mxbai embeddings to parquet format for upload to 23
+# export openai embeddings to parquet file
 openai_export_sql = f"""
     COPY (
          SELECT 
@@ -113,8 +113,9 @@ openai_export_sql = f"""
 def mxbai_embed_ollama(text :str) -> Sequence[float] | None:
     model = "mxbai-embed-large"
     try:
-        response = ollama.embeddings(model=model, prompt=text)
-        return response["embedding"]
+        response = ollama.embed(model=model, input=text)
+        embeddings = response["embeddings"][0]
+        return embeddings
     except ollama._types.ResponseError as e:
         return None
 

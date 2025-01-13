@@ -73,7 +73,7 @@ def mxbai_search_df(q: str, df: pd.DataFrame, limit: int = 25) -> pd.DataFrame:
     if not mxbai_file.exists():
         duckdb.execute(f"COPY (SELECT * from read_parquet('{mxbai_url}')) TO '{mxbai_file}' (FORMAT PARQUET);")
     query = f"Represent this sentence for searching relevant passages: {q}"
-    query_embed = mxbai.encode(query)
+    query_embed = mxbai.encode(query, normalize_embeddings = True)
     sql = f"""
         FROM df
         LEFT JOIN read_parquet('{mxbai_file}') ON (df.perm = student_id)
