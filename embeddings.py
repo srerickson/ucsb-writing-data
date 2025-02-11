@@ -1,3 +1,9 @@
+"""
+This script is used to generate embeddings and a duckdb datatabase from raw
+survey results. It expects the raw survey results file (`data/reflections.csv`),
+an OpenAPI key, and Ollama running locally.
+"""
+
 import pathlib
 import duckdb
 import ollama
@@ -10,7 +16,7 @@ db_path = pathlib.Path('outputs') / 'reflection_embeddings.duckdb'
 mxbai_path = pathlib.Path('outputs') / 'mxbai_embeddings.parquet'
 openai_path = pathlib.Path('outputs') / 'openai_3small.parquet'
 
-# Make sure OPENAI_API_KEY
+# requires OPENAI_API_KEY
 OAclient = OpenAI()
 
 # SQL to create a table for reflections data: one question/response per row

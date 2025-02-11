@@ -1,16 +1,8 @@
-# Using Embeddings for Qualitative Data Exploration
+# Code for 'Using AI to Understand Students’ Self-Assessments of their Writing'
 
-Experimenting with LLM for exploring and visualizing a large collection to free-text survey responses. Work in progress
+This code implements a simple Retrieval-Augmented Generation (RAG) pipeline to 
+explore AI methods for qualitative data analysis.
 
-### Dependencies
+## Dependencies
 
-The Jupyter notebook, `query.ipynb`, requires a few packages that need to be
-installed.
-
-```sh
-# using pip
-pip install jupyterlab duckdb pandas sentence_transformers openai
-
-# using conda
-conda install jupyterlab duckdb pandas sentence_transformers openai
-```
+This project uses [uv](https://docs.astral.s) to manage dependencies. Install dependencies with `uv sync`.

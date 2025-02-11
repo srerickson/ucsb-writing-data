@@ -1,0 +1,15 @@
+[project]
+name = "ucsb-writing-data"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "duckdb>=1.2.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.0",
+    "ollama>=0.4.7",
+    "openai>=1.61.1",
+    "pandas>=2.2.3",
+    "sentence-transformers>=3.4.1",
+]
