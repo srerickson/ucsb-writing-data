@@ -1,11 +1,16 @@
 # Code for 'Using AI to Understand Students’ Self-Assessments of their Writing'
 
-This code implements a simple Retrieval-Augmented Generation (RAG) pipeline to 
-explore AI methods for qualitative data analysis.
+This code implements a simple Retrieval-Augmented Generation (RAG) pipeline to
+explore AI methods for qualitative data analysis. It was developed in
+collaboration with Madeleine Sorapure to explore how/whether RAG can be used
+analyze student responses to a self-assessment survey used in UCSB's Writing
+Program. 
 
 ## Installation
 
-This project uses [uv](https://docs.astral.s) to manage dependencies. Install dependencies with:
+This project uses [uv](https://docs.astral.sh) to manage dependencies. 
+
+To install dependencies with:
 
 ```bash
 $ uv pip install -r pyproject.toml`
@@ -50,11 +55,16 @@ This directory includes python utility functions used in by `query.ipynb` and `r
 
 This directory includes files with embeddings of student responses to survey
 questions (see `embeddings.py`). Embeddings are stored as [Parquet
-files](https://parquet.apache.org/) with the following columns:
+files](https://parquet.apache.org/):
 
-- `embedding` ([]float): the generated embedding from the student's response
+- `outputs/mxbai_embeddings_nonnorm.parquet`
+- `outputs/openai_3small.parquet`
+
+Each parquet file includes the same three columns:
+
+- `embedding` ([]float): the embedding for a student's response to a survey question.
 - `student_id` (string): opaque student identifier 
-- `question_id` (string): the question associated with the student's response
+- `question_id` (string): survey question id for the response
 
 ### `query.ipynb`
 
