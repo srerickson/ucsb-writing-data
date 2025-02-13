@@ -1,7 +1,7 @@
 [project]
 name = "ucsb-writing-data"
 version = "0.1.0"
-description = "Add your description here"
+description = "Code for: Using AI to Understand Students' Self-Assessments of their Writing"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
