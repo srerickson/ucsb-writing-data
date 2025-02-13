@@ -41,7 +41,7 @@ def search_df(q: str, df: pd.DataFrame, limit: int = 25, model: str = "openai") 
 
 
 def openai_search_df(q: str, df: pd.DataFrame, limit: int = 25) -> pd.DataFrame:
-    if not mxbai_norm_file.exists():
+    if not openai_file.exists():
         duckdb.execute(f"COPY (SELECT * from read_parquet('{openai_url}')) TO '{openai_file}' (FORMAT PARQUET);")
     client = OpenAI()
     response =  client.embeddings.create(input=q,model="text-embedding-3-small")

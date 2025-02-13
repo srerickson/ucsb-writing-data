@@ -4,17 +4,27 @@ survey results. It expects the raw survey results file (`data/reflections.csv`),
 an OpenAPI key, and Ollama running locally.
 """
 
-import pathlib
 import duckdb
 import ollama
 from duckdb.typing import VARCHAR
+from pathlib import Path 
 from typing import Sequence
 from openai import OpenAI
 
-src_path = pathlib.Path('data') / 'reflections.csv'
-db_path = pathlib.Path('outputs') / 'reflection_embeddings.duckdb'
-mxbai_path = pathlib.Path('outputs') / 'mxbai_embeddings.parquet'
-openai_path = pathlib.Path('outputs') / 'openai_3small.parquet'
+src_path = Path('data') / 'reflections.csv'
+
+# generated data:
+# duckdb representation of reflections data
+db_path = Path('outputs') / 'reflection_embeddings.duckdb'
+
+# exported non-normalized mxbai embeddings
+mxbai_nonnorm_path = Path("outputs") / 'mxbai_embeddings_nonnorm.parquet'
+
+# exported normalized mxbai embeddings (added later and not used for study)
+# mxbai_norm_file = Path("outputs") / 'mxbai_embeddings_norm.parquet'
+
+# open ai embeddings
+openai_path = Path("outputs") / 'openai_3small.parquet'
 
 # requires OPENAI_API_KEY
 OAclient = OpenAI()
@@ -45,6 +55,8 @@ create_table_sql = f"""
 """
 
 # SQL to create mxbai embeddings table and generate embeddings.
+# This is written to allow the query to continue where a previous
+# run left off. 
 mxbai_embed_large_sql = """
     CREATE TABLE IF NOT EXISTS mxbai_embed_large (
         text_id INTEGER PRIMARY KEY,
@@ -67,8 +79,9 @@ mxbai_embed_large_sql = """
     );
 """
 
-# export mxbai embeddings to parquet file
-mxbai_export_sql = f"""
+# returns sql to export mxbai_embed_large table to parquet file
+def mxbai_export_sql(parquet_path):
+    return f"""
     COPY (
          SELECT 
             texts.student_id as student_id,
@@ -77,10 +90,12 @@ mxbai_export_sql = f"""
         FROM texts
         LEFT JOIN mxbai_embed_large 
             ON mxbai_embed_large.text_id = texts.id
-    ) TO '{str(mxbai_path)}' (FORMAT PARQUET);
-"""
+    ) TO '{str(parquet_path)}' (FORMAT PARQUET);
+    """
 
 # SQL to create openai embeddings table and generate embeddings.
+# This is written to allow the query to continue where a previous
+# run left off. 
 openai_3small_sql = """
     CREATE TABLE IF NOT EXISTS openai_3small (
         text_id INTEGER PRIMARY KEY,
@@ -104,7 +119,8 @@ openai_3small_sql = """
 """
 
 # export openai embeddings to parquet file
-openai_export_sql = f"""
+def openai_export_sql(openai_path):
+    return f"""
     COPY (
          SELECT 
             texts.student_id as student_id,
@@ -114,14 +130,18 @@ openai_export_sql = f"""
         LEFT JOIN openai_3small 
             ON openai_3small.text_id = texts.id
     ) TO '{str(openai_path)}' (FORMAT PARQUET);
-"""
+    """
 
 def mxbai_embed_ollama(text :str) -> Sequence[float] | None:
     model = "mxbai-embed-large"
     try:
-        response = ollama.embed(model=model, input=text)
-        embeddings = response["embeddings"][0]
-        return embeddings
+        # this return a non-normalized embedding!
+        response = ollama.embeddings(model=model, prompt=text)
+        return response["embedding"]
+        # for normalized embeddings:
+        # response = ollama.embed(model=model, input=text)
+        # embeddings = response["embeddings"][0]
+        # return embeddings
     except ollama._types.ResponseError as e:
         return None
 
@@ -133,7 +153,11 @@ with duckdb.connect(database=str(db_path)) as conn:
     conn.create_function('do_mxbai_embed_large', mxbai_embed_ollama, [VARCHAR], 'FLOAT[1024]')
     conn.create_function('do_openai_3small', openai_3small, [VARCHAR], 'FLOAT[1536]')
     conn.execute(create_table_sql)
-    conn.execute(mxbai_embed_large_sql)
-    conn.execute(mxbai_export_sql)
+
+    # generate and export (non-normalized) mxbai embeddings
+    #conn.execute(mxbai_embed_large_sql)
+    #conn.execute(mxbai_export_sql(mxbai_nonnorm_path))
+    
+    #generate and export openai embeddings
     conn.execute(openai_3small_sql)
-    conn.execute(openai_export_sql)
+    conn.execute(openai_export_sql(openai_path))
