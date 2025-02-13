@@ -10,9 +10,8 @@ This project uses [uv](https://docs.astral.s) to manage dependencies. Install de
 ```bash
 $ uv pip install -r pyproject.toml`
 ```
-## Overview
 
-In addition to project metadata files, the project includes the following:
+## Overview
 
 ### `data/`
 
@@ -25,7 +24,7 @@ This script is used to generate the two embeddings files included in the public 
 using raw survey results (not included in the public dataset):
 
 - `outputs/mxbai_embeddings_nonnorm.parquet`
-- `outputs/openai_3small.parquet.parquet`
+- `outputs/openai_3small.parquet`
 
 The script expects the raw survey results in `data/reflections.csv`, an OpenAPI
 key, and the Ollama service running locally. For this project, the script was
@@ -49,7 +48,13 @@ This directory includes python utility functions used in by `query.ipynb` and `r
 
 ### `outputs/`
 
-This directory includes generated data results (see `embeddings.py`).
+This directory includes files with embeddings of student responses to survey
+questions (see `embeddings.py`). Embeddings are stored as [Parquet
+files](https://parquet.apache.org/) with the following columns:
+
+- `embedding` ([]float): the generated embedding from the student's response
+- `student_id` (string): opaque student identifier 
+- `question_id` (string): the question associated with the student's response
 
 ### `query.ipynb`
 
