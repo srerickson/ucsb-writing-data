@@ -13,7 +13,7 @@ This project uses [uv](https://docs.astral.sh) to manage dependencies.
 To install dependencies with:
 
 ```bash
-$ uv pip install -r pyproject.toml`
+$ uv pip install -r pyproject.toml
 ```
 
 ## Overview
@@ -84,7 +84,3 @@ context is included in a ChatGPT prompt and used to generate a response the
 question.
 
 Use `uv run jupyter lab` to start Jupyter Lab.
-
-## Installation
-
-This project uses [uv](https://docs.astral.s) to manage dependencies. Install dependencies with `uv sync`.
