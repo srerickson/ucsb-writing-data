@@ -31,6 +31,15 @@ def search_display(q: str, df: pd.DataFrame, limit: int = 25, model: str = "mxba
         display(md(text))
 
 
+# search df for query
+## Optional pre-filtering
+#
+## example: subset df to students from a specific department
+# df = df[ df.DEPT0 == "EEMB/MCDB"]
+#
+## example: subset df to first gen students in a specific department
+# df = df[ (df.DEPT0 == "EEMB/MCDB") & (df.first_gen_coll_student == 1)]
+#
 def search_df(q: str, df: pd.DataFrame, limit: int = 25, model: str = "openai") -> pd.DataFrame:
     if model == "mxbai":
        # stay combatible with old behavior: 'mxbai' refers to non-normalized data

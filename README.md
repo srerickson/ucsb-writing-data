@@ -20,8 +20,10 @@ $ uv pip install -r pyproject.toml
 
 ### `data/`
 
-The data directory where raw survey data should be saved, if available. It is
-intentionally left empty in the public dataset.
+The data directory includes raw survey responses. The public dataset includes
+`reflections-public.csv`, which is a subset of the full suvey response data. It
+includs only text responses, including the 310 responses selected in the study, 
+as describe in the paper.
 
 ### `embeddings.py`
 
@@ -31,9 +33,9 @@ using raw survey results (not included in the public dataset):
 - `outputs/mxbai_embeddings_nonnorm.parquet`
 - `outputs/openai_3small.parquet`
 
-The script expects the raw survey results in `data/reflections.csv`, an OpenAPI
-key, and the Ollama service running locally. For this project, the script was
-run on MacOS v15.3.1 with Ollama v0.4.4. 
+The script expects the full raw survey results in `data/reflections.csv`, an
+OpenAPI key, and the Ollama service running locally. For this project, the
+script was run on MacOS v15.3.1 with Ollama v0.4.4. 
 
 Usage example:
 ```bash
